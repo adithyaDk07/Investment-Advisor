@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Advisor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .progress-bar {
+            height: 20px;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar .progress {
+            height: 100%;
+            background-color: #28a745;
+            width: 0%;
+        }
+        .checkbox-group {
+            margin-bottom: 20px;
+        }
+        .pie-chart-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        canvas {
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="page1">
+        <h1>Investment Advisor</h1>
+        <form id="userForm">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Mail ID</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="country">Country</label>
+            <input type="text" id="country" name="country" required>
+
+            <label for="job">Job</label>
+            <input type="text" id="job" name="job" required>
+
+            <label for="investment">Amount for Investment</label>
+            <input type="number" id="investment" name="investment" required>
+
+            <button type="button" onclick="validateForm()">Submit</button>
+        </form>
+    </div>
+
+    <div class="container" id="page2" style="display: none;">
+        <h1>Choose Investment Options</h1>
+        <div class="checkbox-group">
+            <label><input type="checkbox" value="20" onchange="updateProgress(this)"> Gold (20%)</label>
+            <label><input type="checkbox" value="10" onchange="updateProgress(this)"> Silver (10%)</label>
+            <label><input type="checkbox" value="40" onchange="updateProgress(this)"> Mutual Fund (40%)</label>
+            <label><input type="checkbox" value="30" onchange="updateProgress(this)"> Equity (30%)</label>
+            <label><input type="checkbox" value="30" onchange="updateProgress(this)"> Index Fund (30%)</label>
+            <label><input type="checkbox" value="10" onchange="updateProgress(this)"> PPF (10%)</label>
+            <label><input type="checkbox" value="5" onchange="updateProgress(this)"> PF (5%)</label>
+            <label><input type="checkbox" value="5" onchange="updateProgress(this)"> FD (5%)</label>
+            <label><input type="checkbox" value="7" onchange="updateProgress(this)"> Bonds (7%)</label>
+            <label><input type="checkbox" value="10" onchange="updateProgress(this)"> ETF (10%)</label>
+        </div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <button type="button" onclick="goToPage3()">Proceed</button>
+    </div>
+
+    <div class="container" id="page3" style="display: none;">
+        <h1>Investment Allocation</h1>
+        <div class="pie-chart-container">
+            <div id="details"></div>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let investmentAmount = 0;
+        const allocations = {
+            "Gold": 20,
+            "Silver": 10,
+            "Mutual Fund": 40,
+            "Equity": 30,
+            "Index Fund": 30,
+            "PPF": 10,
+            "PF": 5,
+            "FD": 5,
+            "Bonds": 7,
+            "ETF": 10
+        };
+        const selectedOptions = [];
+
+        function validateForm() {
+            const form = document.getElementById('userForm');
+            if (form.checkValidity()) {
+                investmentAmount = parseInt(document.getElementById('investment').value);
+                document.getElementById('page1').style.display = 'none';
+                document.getElementById('page2').style.display = 'block';
+            } else {
+                alert('Please fill in all fields correctly.');
+            }
+        }
+
+        function updateProgress(checkbox) {
+            if (checkbox.checked) {
+                if (selectedOptions.length < 5) {
+                    selectedOptions.push(checkbox.value);
+                } else {
+                    checkbox.checked = false;
+                    alert('You can select only 5 options.');
+                    return;
+                }
+            } else {
+                const index = selectedOptions.indexOf(checkbox.value);
+                if (index > -1) {
+                    selectedOptions.splice(index, 1);
+                }
+            }
+
+            const progress = selectedOptions.reduce((sum, val) => sum + parseInt(val), 0);
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function goToPage3() {
+            if (selectedOptions.length === 5) {
+                document.getElementById('page2').style.display = 'none';
+                document.getElementById('page3').style.display = 'block';
+                displayPieChart();
+            } else {
+                alert('Please select exactly 5 options.');
+            }
+        }
+
+        function displayPieChart() {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            const data = selectedOptions.map(option => ({
+                label: Object.keys(allocations).find(key => allocations[key] == option),
+                value: (investmentAmount * option) / 100
+            }));
+
+            const labels = data.map(item => item.label);
+            const values = data.map(item => item.value);
+
+            const detailsDiv = document.getElementById('details');
+            detailsDiv.innerHTML = data.map(item => `<p>${item.label}: $${item.value.toFixed(2)}</p>`).join('');
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                            '#FF9F40', '#C9CBCF', '#FF5151', '#51FF84', '#8451FF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

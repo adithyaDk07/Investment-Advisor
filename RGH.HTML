@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Portfolio Advisor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #74b9ff, #81ecec);
+            color: #2d3436;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .welcome-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .page {
+            display: none;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+
+        button {
+            background: #0984e3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #74b9ff;
+        }
+
+        .investment-options {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sub-options {
+            margin-left: 30px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .toggle-btn {
+            font-size: 0.8em;
+            padding: 5px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            cursor: pointer;
+            background: #0984e3;
+            color: white;
+            border: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="welcome-modal">
+            <h2>Welcome to Investment Portfolio Advisor</h2>
+            <p>Beware: This is fully made by a single person</p>
+            <button onclick="startApp()">Get Started</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="signInPage" class="page">
+            <h1>Sign In</h1>
+            <form id="signInForm">
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Country:</label>
+                    <input type="text" id="country" required>
+                </div>
+                <div class="form-group">
+                    <label>Job:</label>
+                    <input type="text" id="job" required>
+                </div>
+                <div class="form-group">
+                    <label>Investment Amount (₹):</label>
+                    <input type="number" id="investmentAmount" required>
+                </div>
+                <button type="submit">Continue</button>
+            </form>
+        </div>
+
+        <div id="investmentPage" class="page">
+          <h1>Select Investment Options</h1>
+          <div class="investment-options"></div>
+          <p id="insufficientFunds" style="color: red;"></p>
+          <button onclick="submitInvestments()" style="margin-top: 20px;">Submit</button>
+      </div>
+      <div id="resultPage" class="page">
+        <h1>Investment Distribution</h1>
+        <canvas id="pieChart"></canvas>
+        <div id="explanation" class="advice-section"></div>
+        <div id="insufficientFunds" class="error-message"></div>
+        <div class="advice-section">
+            <h3>Investment Advice</h3>
+            <p>For optimal growth in your investment portfolio:</p>
+            <ul>
+                <li>Maintain consistent investment habits</li>
+                <li>Review and rebalance your portfolio periodically</li>
+                <li>Stay invested for the long term</li>
+                <li>Consider increasing your investment amount as your income grows</li>
+            </ul>
+        </div>
+    </div>
+    
+    </div>
+
+    
+     
+    <script>
+        const investmentOptions = {
+            'Mutual Fund': {
+                percentage: 40,
+                subOptions: ['Interim', 'Direct', 'Growth', 'Regular']
+            },
+            'Equity Stocks': {
+                percentage: 30,
+                subOptions: ['IT', 'Banking', 'FMCG', 'Pharma']
+            },
+            'Index Funds': {
+                percentage: 30,
+                subOptions: ['NIFTY 50 Index', 'SENSEX Index']
+            },
+            'Gold': { percentage: 20 },
+            'Silver': { percentage: 10 },
+            'ETF': { percentage: 20 },
+            'PPF': { percentage: 10 },
+            'PF': { percentage: 10 },
+            'FD': { percentage: 10 }
+        };
+
+        let userData = {
+            amount: 0,
+            selections: {}
+        };
+
+        function startApp() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('signInPage').classList.add('active');
+        }
+
+        document.getElementById('signInForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            userData.amount = parseFloat(document.getElementById('investmentAmount').value);
+            document.getElementById('signInPage').classList.remove('active');
+            document.getElementById('investmentPage').classList.add('active');
+            generateInvestmentOptions();
+        });
+        
+
+        function startApp() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('signInPage').classList.add('active');
+        }
+
+        function generateInvestmentOptions() {
+            const container = document.querySelector('.investment-options');
+            for (const [option, details] of Object.entries(investmentOptions)) {
+                const div = document.createElement('div');
+                div.className = 'option-group';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = option;
+
+                const label = document.createElement('label');
+                label.htmlFor = option;
+                label.textContent = `${option}`;
+
+                div.appendChild(checkbox);
+                div.appendChild(label);
+
+                if (details.subOptions) {
+                    const subOptionsDiv = document.createElement('div');
+                    subOptionsDiv.className = 'sub-options';
+                    
+                    details.subOptions.forEach(subOption => {
+                        const subCheckbox = document.createElement('input');
+                        subCheckbox.type = 'checkbox';
+                        subCheckbox.id = `${option}-${subOption}`;
+                        
+                        const subLabel = document.createElement('label');
+                        subLabel.htmlFor = `${option}-${subOption}`;
+                        subLabel.textContent = subOption;
+
+                        subOptionsDiv.appendChild(subCheckbox);
+                        subOptionsDiv.appendChild(subLabel);
+                        subOptionsDiv.appendChild(document.createElement('br'));
+                    });
+
+                    const toggleButton = document.createElement('button');
+                    toggleButton.textContent = '▼';
+                    toggleButton.style.marginLeft = '10px';
+                    toggleButton.onclick = () => {
+                        subOptionsDiv.style.display = 
+                            subOptionsDiv.style.display === 'none' ? 'block' : 'none';
+                    };
+
+                    div.appendChild(toggleButton);
+                    div.appendChild(subOptionsDiv);
+                }
+
+                container.appendChild(div);
+            }
+        }
+
+        function submitInvestments() {
+            const selections = {};
+            let totalPercentage = 0;
+
+            for (const [option, details] of Object.entries(investmentOptions)) {
+                const checkbox = document.getElementById(option);
+                if (checkbox.checked) {
+                    selections[option] = {
+                        percentage: details.percentage,
+                        amount: (userData.amount * details.percentage) / 100
+                    };
+
+                    if (details.subOptions) {
+                        const selectedSubOptions = details.subOptions.filter(
+                            subOption => document.getElementById(`${option}-${subOption}`).checked
+                        );
+                        
+                        if (selectedSubOptions.length > 0) {
+                            const subPercentage = details.percentage / selectedSubOptions.length;
+                            selections[option].subAllocations = {};
+                            selectedSubOptions.forEach(subOption => {
+                                selections[option].subAllocations[subOption] = {
+                                    percentage: subPercentage,
+                                    amount: (userData.amount * subPercentage) / 100
+                                };
+                            });
+                        }
+                    }
+
+                    totalPercentage += details.percentage;
+                }
+            }
+
+            userData.selections = selections;
+            if (totalPercentage > 100) {
+                document.getElementById('insufficientFunds').textContent = 'Allocation exceeds 100%. Please adjust your selections.';
+                return;
+            } else {
+                document.getElementById('insufficientFunds').textContent = '';
+            }
+
+            document.getElementById('investmentPage').classList.remove('active');
+            document.getElementById('resultPage').classList.add('active');
+            showResults();
+        }
+
+        function showResults() {
+            const labels = Object.keys(userData.selections);
+            const data = labels.map(label => userData.selections[label].amount);
+
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#0984e3', '#74b9ff', '#81ecec', '#55efc4', '#00cec9', '#6c5ce7', '#d63031', '#fdcb6e', '#00b894'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+
+            const explanationDiv = document.getElementById('explanation');
+            explanationDiv.innerHTML = '<h3>Your Investment Breakdown:</h3>';
+            for (const [key, value] of Object.entries(userData.selections)) {
+                explanationDiv.innerHTML += `<p>${key}: ₹${value.amount.toFixed(2)}</p>`;
+                if (value.subAllocations) {
+                    for (const [subKey, subValue] of Object.entries(value.subAllocations)) {
+                        explanationDiv.innerHTML += `<p style="margin-left: 20px;">${subKey}: ₹${subValue.amount.toFixed(2)}</p>`;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+ 

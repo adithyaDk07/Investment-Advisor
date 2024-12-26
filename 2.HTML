@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Advisor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .checkbox-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-item {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .tooltip .tooltip-content {
+            visibility: hidden;
+            width: 300px;
+            background-color: #34495e;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 15px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .tooltip:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #2ecc71;
+            transition: width 0.3s ease;
+        }
+
+        .sub-options {
+            margin-left: 40px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            background: #f8f9fa;
+            border-left: 2px solid #3498db;
+        }
+
+        .sub-options.expanded {
+            max-height: 1000px;
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        #page1, #page2, #page3 {
+            display: none;
+        }
+
+        .active {
+            display: block !important;
+        }
+
+        .warning {
+            color: #e74c3c;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .info-icon {
+            color: #3498db;
+            cursor: help;
+            margin-left: 5px;
+            font-size: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #6366f1, #3b82f6);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+            outline: none;
+        }
+
+        .investment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .investment-item {
+            position: relative;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .investment-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .arrow-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.3s;
+        }
+
+        .arrow-icon.expanded {
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        .sub-options {
+            margin-left: 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+
+        .sub-options.expanded {
+            max-height: 500px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .percentage-input {
+            width: 60px;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #6366f1, #3b82f6);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .investment-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .investment-tree {
+            margin: 20px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .tree-item {
+            position: relative;
+            padding-left: 30px;
+            margin: 15px 0;
+        }
+
+        .tree-item::before {
+            content: '|';
+            position: absolute;
+            left: 15px;
+            color: #666;
+        }
+
+        .tree-item.sub-item {
+            margin-left: 30px;
+        }
+
+        .tree-item.sub-item::before {
+            content: '└';
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .percentage-input {
+            width: 60px;
+            padding: 4px;
+            margin-left: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="page1" class="active">
+            <div class="header">
+                <h1>Investment Advisor</h1>
+                <p>Plan Your Financial Future</p>
+            </div>
+            <div class="form-container">
+                <form id="userForm">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="job">Job</label>
+                        <input type="text" id="job" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Investment Amount</label>
+                        <input type="number" id="amount" min="1" required>
+                    </div>
+                    <button type="submit">Continue</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="page2" class="page active">
+            <h2>Select Your Investment Options</h2>
+            <div id="investmentOptions" class="investment-grid"></div>
+            <div id="warningText" class="warning"></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <button id="proceedBtn" disabled>Proceed</button>
+        </div>
+
+        <div id="page3">
+            <h1>Investment Summary</h1>
+            <div id="summaryContent"></div>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const investmentData = {
+            'Stocks': {
+                allocation: 20,
+                info: 'Direct investment in company shares',
+                tooltip: 'Stocks represent ownership in companies...'
+            },
+            'Bonds': {
+                allocation: 10,
+                info: 'Fixed-income debt securities',
+                tooltip: 'Bonds are loans to governments or corporations...'
+            },
+            'Mutual Funds': {
+                allocation: 40,
+                info: 'Professionally managed investment pools',
+                tooltip: 'Mutual Funds pool money from multiple investors...',
+                subOptions: {
+                    'Interim': { allocation: 20 },
+                    'Growth': { allocation: 20 }
+                }
+            },
+            'Index Funds': {
+                allocation: 30,
+                info: 'Track market indices performance',
+                tooltip: 'Index funds follow market benchmarks...',
+                subOptions: {
+                    'Nifty 50': { allocation: 6.25 },
+                    'Sensex': { allocation: 6.25 },
+                    'Sectoral': { allocation: 6.25 },
+                    'International': { allocation: 6.25 }
+                }
+            },
+            'PPF': {
+                allocation: 10,
+                info: 'Public Provident Fund scheme',
+                tooltip: 'Government backed long-term investment...'
+            },
+            'PF': {
+                allocation: 10,
+                info: 'Provident Fund',
+                tooltip: 'Employee retirement benefit scheme...'
+            },
+            'FD': {
+                allocation: 10,
+                info: 'Fixed Deposits',
+                tooltip: 'Bank deposits with fixed interest rates...'
+            },
+            'Gold': {
+                allocation: 20,
+                info: 'Physical or digital gold investment',
+                tooltip: 'Precious metal investment option...'
+            },
+            'Silver': {
+                allocation: 10,
+                info: 'Physical or digital silver investment',
+                tooltip: 'Alternative precious metal investment...'
+            }
+        };
+        
+        const maxSelections = 5; // Maximum allowed selections
+        const selectedInvestments = new Map();
+        let investmentAmount = 0;
+
+        function initializeInvestmentOptions() {
+            const container = document.getElementById('investmentOptions');
+            container.className = 'investment-grid';
+
+            Object.entries(investmentData).forEach(([investment, data]) => {
+                const div = document.createElement('div');
+                div.className = 'investment-item';
+
+                let subOptionsHTML = '';
+                if (data.subOptions) {
+                    subOptionsHTML = `
+                        <div class="sub-options">
+                            ${Object.entries(data.subOptions)
+                                .map(
+                                    ([subOpt]) => `
+                                <div class="sub-option">
+                                    <input type="checkbox" id="${investment}-${subOpt}" onchange="handleSubCheckboxChange(this)">
+                                    <label for="${investment}-${subOpt}">${subOpt}</label>
+                                </div>`
+                                )
+                                .join('')}
+                        </div>`;
+                }
+
+                div.innerHTML = `
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="${investment}" onchange="handleCheckboxChange(this)">
+                        <label for="${investment}">
+                            ${investment} <br><small>${data.info}</small>
+                        </label>
+                        <div class="arrow-icon" onclick="toggleSubOptions(this)">▶</div>
+                    </div>
+                    ${subOptionsHTML}`;
+                
+                container.appendChild(div);
+            });
+
+            setupProgress();
+        }
+
+        function handleCheckboxChange(checkbox) {
+            const investment = checkbox.id;
+
+            if (checkbox.checked) {
+                if (selectedInvestments.size >= maxSelections) {
+                    alert(`You can only select up to ${maxSelections} options. The last option will be adjusted.`);
+                    reallocateInvestments(investment);
+                } else {
+                    selectedInvestments.set(investment, investmentData[investment].allocation);
+                }
+            } else {
+                selectedInvestments.delete(investment);
+            }
+
+            updateProgress();
+        }
+
+        function reallocateInvestments(newInvestment) {
+            const keys = Array.from(selectedInvestments.keys());
+
+            // Remove the last item if selections exceed limit
+            if (keys.length >= maxSelections) {
+                selectedInvestments.delete(keys[keys.length - 1]);
+            }
+
+            // Add the new investment
+            selectedInvestments.set(newInvestment, investmentData[newInvestment].allocation);
+
+            // Normalize allocation to fit 100%
+            const allocations = Array.from(selectedInvestments.values());
+            const total = allocations.reduce((sum, allocation) => sum + allocation, 0);
+            const normalizedAllocations = allocations.map((allocation) => (allocation / total) * 100);
+
+            Array.from(selectedInvestments.keys()).forEach((key, index) => {
+                selectedInvestments.set(key, normalizedAllocations[index]);
+            });
+        }
+
+        function updateProgress() {
+            let total = 0;
+            selectedInvestments.forEach((allocation) => {
+                total += allocation;
+            });
+
+            const progressBar = document.getElementById('progressBar');
+            const proceedBtn = document.getElementById('proceedBtn');
+            const warningText = document.getElementById('warningText');
+
+            progressBar.style.width = `${total}%`;
+            proceedBtn.disabled = total !== 100;
+
+            warningText.textContent =
+                total > 100
+                    ? 'Total allocation exceeds 100%. Please adjust.'
+                    : total < 100
+                    ? `Select more investments (${100 - total}% remaining)`
+                    : '';
+        }
+
+        function toggleSubOptions(arrow) {
+            const subOptions = arrow.closest('.investment-item').querySelector('.sub-options');
+            if (subOptions) {
+                arrow.classList.toggle('expanded');
+                subOptions.classList.toggle('expanded');
+            }
+        }
+
+        
+        document.getElementById('userForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Hide page1 and show page2
+            document.getElementById('page1').classList.remove('active');
+            document.getElementById('page1').style.display = 'none';
+            document.getElementById('page2').classList.add('active');
+            document.getElementById('page2').style.display = 'block';
+        });
+
+        document.getElementById('proceedBtn').addEventListener('click', function () {
+            // Hide page2 and show page3
+            document.getElementById('page2').classList.remove('active');
+            document.getElementById('page2').style.display = 'none';
+            document.getElementById('page3').classList.add('active');
+            document.getElementById('page3').style.display = 'block';
+            createSummary();
+        });
+
+        function updateProgress() {
+            let total = 0;
+            selectedInvestments.forEach((allocation) => {
+                total += allocation;
+            });
+
+            const progressBar = document.getElementById('progressBar');
+            const progressValue = document.getElementById('progressValue');
+            const warningText = document.getElementById('warningText');
+
+            progressBar.style.width = `${total}%`;
+            progressValue.textContent = `${total}%`;
+
+            if (total > 100) {
+                warningText.textContent = 'Total allocation exceeds 100%';
+            } else if (total < 100) {
+                warningText.textContent = `Select more investments (${100 - total}% remaining)`;
+            } else {
+                warningText.textContent = '';
+            }
+        }
+
+        function createSummary() {
+            const summaryContent = document.getElementById('summaryContent');
+            summaryContent.innerHTML = ''; // Clear previous summary
+
+            const summaryList = document.createElement('ul');
+            selectedInvestments.forEach((allocation, investment) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${investment}: ${allocation}%`;
+                summaryList.appendChild(listItem);
+            });
+
+            summaryContent.appendChild(summaryList);
+
+            // Generate pie chart using Canvas
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            const labels = Array.from(selectedInvestments.keys());
+            const data = Array.from(selectedInvestments.values());
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            data,
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                        },
+                    ],
+                },
+            });
+        } 
+
+        // Initialize the page
+        initializeInvestmentOptions(); 
+        function createTreeStructure() {
+            const container = document.getElementById('investmentOptions');
+            container.className = 'investment-tree';
+            
+            function createTreeItem(name, data, level = 0) {
+                const div = document.createElement('div');
+                div.className = `tree-item ${level > 0 ? 'sub-item' : ''}`;
+                
+                const label = document.createElement('label');
+                label.className = 'checkbox-label';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = name.replace(/\s+/g, '-');
+                
+                const span = document.createElement('span');
+                span.textContent = name;
+                
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'percentage-input';
+                input.value = data.allocation;
+                
+                label.append(checkbox, span, input, '%');
+                div.appendChild(label);
+                
+                if (data.subOptions) {
+                    Object.entries(data.subOptions).forEach(([subName, subData]) => {
+                        div.appendChild(createTreeItem(subName, subData, level + 1));
+                    });
+                }
+                
+                return div;
+            }
+            
+            Object.entries(investmentStructure).forEach(([name, data]) => {
+                container.appendChild(createTreeItem(name, data));
+            });
+        }
+        
+        function initializeInvestmentOptions() {
+            const container = document.getElementById('investmentOptions');
+            container.className = 'investment-grid';
+            
+            Object.entries(investmentData).forEach(([investment, data]) => {
+                const div = document.createElement('div');
+                div.className = 'investment-item';
+                
+                let subOptionsHTML = '';
+                if (data.subOptions) {
+                    subOptionsHTML = `
+                        <div class="sub-options" id="${investment}-sub">
+                            ${Object.entries(data.subOptions).map(([subOpt, subData]) => `
+                                <div class="sub-option">
+                                    <input type="checkbox" id="${investment}-${subOpt}">
+                                    <label for="${investment}-${subOpt}">
+                                        ${subOpt}
+                                        <input type="number" class="percentage-input" 
+                                               value="${subData.allocation}" min="0" max="100">%
+                                    </label>
+                                </div>
+                            `).join('')}
+                            <div class="error-message"></div>
+                        </div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="arrow-icon">▶</div>
+                    <input type="checkbox" id="${investment}">
+                    <label for="${investment}">
+                        ${investment} (${data.allocation}%)
+                        <br>
+                        <small>${data.info}</small>
+                    </label>
+                    ${subOptionsHTML}
+                `;
+                
+                container.appendChild(div);
+            });
+
+            // Add event listeners for arrows and checkboxes
+            setupEventListeners();
+        }
+
+        function initializeInvestmentOptions() {
+            const container = document.getElementById('investmentOptions');
+            container.className = 'investment-grid';
+            
+            Object.entries(investmentData).forEach(([investment, data]) => {
+                const div = document.createElement('div');
+                div.className = 'investment-item';
+                
+                let subOptionsHTML = '';
+                if (data.subOptions) {
+                    subOptionsHTML = `
+                        <div class="sub-options" id="${investment}-sub">
+                            ${Object.entries(data.subOptions).map(([subOpt, subData]) => `
+                                <div class="sub-option">
+                                    <input type="checkbox" id="${investment}-${subOpt}">
+                                    <label for="${investment}-${subOpt}">
+                                        ${subOpt}
+                                        <input type="number" class="percentage-input" 
+                                               value="${subData.allocation}" min="0" max="100">%
+                                    </label>
+                                </div>
+                            `).join('')}
+                            <div class="error-message"></div>
+                        </div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="arrow-icon">▶</div>
+                    <input type="checkbox" id="${investment}">
+                    <label for="${investment}">
+                        ${investment} (${data.allocation}%)
+                        <br>
+                        <small>${data.info}</small>
+                    </label>
+                    ${subOptionsHTML}
+                `;
+                
+                container.appendChild(div);
+            });
+
+            // Add event listeners for arrows and checkboxes
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.arrow-icon').forEach(arrow => {
+                arrow.addEventListener('click', function() {
+                    const item = this.closest('.investment-item');
+                    const subOptions = item.querySelector('.sub-options');
+                    if (subOptions) {
+                        this.classList.toggle('expanded');
+                        subOptions.classList.toggle('expanded');
+                    }
+                });
+            });
+
+            // Add validation for sub-options percentage
+            document.querySelectorAll('.percentage-input').forEach(input => {
+                input.addEventListener('change', validateSubOptions);
+            });
+        }
+
+        function validateSubOptions(event) {
+            const investmentItem = event.target.closest('.investment-item');
+            const investment = investmentItem.querySelector('input[type="checkbox"]').id;
+            const subInputs = investmentItem.querySelectorAll('.percentage-input');
+            const errorDiv = investmentItem.querySelector('.error-message');
+            
+            let total = 0;
+            subInputs.forEach(input => {
+                if (input.closest('.sub-option').querySelector('input[type="checkbox"]').checked) {
+                    total += parseFloat(input.value) || 0;
+                }
+            });
+
+            const expectedTotal = investmentData[investment].allocation;
+            if (total !== expectedTotal) {
+                errorDiv.textContent = `Total must equal ${expectedTotal}%. Current: ${total}%`;
+                return false;
+            }
+            
+            errorDiv.textContent = '';
+            return true;
+        }
+        
+
+        document.getElementById('userForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            investmentAmount = parseFloat(document.getElementById('amount').value);
+            document.getElementById('page1').classList.remove('active');
+            document.getElementById('page2').classList.add('active');
+            initializeInvestmentOptions();
+        });
+
+        function initializeInvestmentOptions() {
+            const container = document.getElementById('investmentOptions');
+            Object.entries(investmentData).forEach(([investment, data]) => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <div class="tooltip">
+                        <input type="checkbox" id="${investment}" onchange="handleCheckboxChange(this)">
+                        <label for="${investment}">
+                            ${investment} (${data.allocation}%)
+                            <br>
+                            <small>${data.info}</small>
+                        </label>
+                        <div class="tooltip-content">${data.tooltip}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function handleCheckboxChange(checkbox) {
+            const investment = checkbox.id;
+            if (checkbox.checked) {
+                selectedInvestments.set(investment, investmentData[investment].allocation);
+            } else {
+                selectedInvestments.delete(investment);
+            }
+            updateProgress();
+        }
+
+        
+        document.getElementById('proceedBtn').addEventListener('click', () => {
+            document.getElementById('page2').classList.remove('active');
+            document.getElementById('page3').classList.add('active');
+            createSummary();
+        });
+
+        
+            const summaryContent = document.getElementById('summaryContent');
+            const investments = Array.from(selectedInvestments.entries());
+            
+            const summaryHTML = investments.map(([investment, allocation]) => {
+                const amount = (investmentAmount * allocation / 100).toFixed(2);
+                return `
+                    <div class="tooltip">
+                        <p>${investment}: $${amount} (${allocation}%)</p>
+                        <div class="tooltip-content">${investmentData[investment].tooltip}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            summaryContent.innerHTML = summaryHTML;
+
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: investments.map(([inv]) => inv),
+                    datasets: [{
+                        data: investments.map(([_, allocation]) => allocation),
+                        backgroundColor: [
+                            '#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#f1c40f',
+                            '#1abc9c', '#3498db', '#9b59b6', '#e67e22', '#f1c40f'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
